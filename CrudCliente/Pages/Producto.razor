@@ -1,0 +1,89 @@
+﻿@page "/producto"
+@page "/producto/{IdProductoEditar:int}"
+
+
+@using ModelLayer;
+@using CrudCliente.Services;
+
+@inject IProductoService productoService;
+@inject ICategoriaService categoriaService;
+@inject NavigationManager navegacion;
+
+
+<h3>@titulo</h3>
+
+<EditForm Model="producto" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <div class="mb-3">
+        <label class="form-label">Nombre de Producto </label>
+        <InputText class="form-control" @bind-Value="producto.Nombre"></InputText>
+        <ValidationMessage For="@(() => producto.Nombre)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Categoria</label>
+        <InputSelect class="form-select" @bind-Value="producto.IdCategoria">
+            <option value="0">-- Seleccionar --</option>
+            @foreach(var item in listaCategoria)
+            {
+                <option value="@item.IdCategoria">@item.NombreCategoria</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => producto.IdCategoria)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Precio</label>
+        <InputNumber class="form-control" @bind-Value="producto.Precio"></InputNumber>
+        <ValidationMessage For="@(() => producto.Precio)"></ValidationMessage>
+    </div>
+
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="empleados">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int IdProductoEditar { get; set; } = 0;
+
+
+    string titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    ProductoDTO producto = new ProductoDTO();
+    List<CategoriaDTO> listaCategoria = new List<CategoriaDTO>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if(IdProductoEditar != 0)
+        {
+            producto = await productoService.Buscar(IdProductoEditar);
+            btnTexto = "Actualizar Producto";
+            titulo = "Editar Producto";
+        }
+        else
+        {
+            
+            btnTexto = "Guardar Producto";
+            titulo = "Nuevo Producto";
+        }
+        listaCategoria = await categoriaService.Lista();
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+        if (IdProductoEditar == 0)
+            idDevuelto = await productoService.Guardar(producto);
+        else
+            idDevuelto = await productoService.Editar(producto);
+
+
+        if (idDevuelto != 0)
+            navegacion.NavigateTo("/productos");
+
+    }
+}

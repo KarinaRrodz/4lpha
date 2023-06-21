@@ -1,0 +1,81 @@
+﻿@page "/productos"
+ 
+@using ModelLayer;
+@using CurrieTechnologies.Razor.SweetAlert2;
+@using CrudCliente.Services;
+
+@inject SweetAlertService Swal;
+@inject IProductoService productoService;
+
+<h3>Productos</h3>
+
+<a class="btn btn-success btn-sm mb-3" href="producto">Nuevo Producto</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Nombre Producto</th>
+            <th>Categoria</th>
+            <th>Precio </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @if(listaProducto == null)
+        {
+            <tr>
+                <td colspan="5" align="center">
+                    <img style="width:50px" src="https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif" />
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach(var item in listaProducto)
+            {
+                <tr>
+                    <td>@item.Nombre</td>
+                    <td>@item.Categoria!.NombreCategoria</td>
+                    <td>@item.Precio</td>
+                    <td>
+                        <a class="btn btn-primary btn-sm" href="producto/@item.IdProducto">
+                            <i class="oi oi-pencil"></i>
+                         </a>
+                         <button type="button" class="btn btn-danger btn-sm ms-2" @onclick="(() => Eliminar(item.IdProducto))">
+                            <i class="oi oi-trash"></i>
+                         </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+
+@code {
+    List<ProductoDTO>? listaProducto = null;
+    protected override async Task OnInitializedAsync()
+    {
+        listaProducto = await productoService.Lista();
+    }
+
+    private async Task Eliminar(int Id)
+    {
+        var resultado = await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Eliminar Producto",
+                Text = "Deseas eliminar el producto?",
+                Icon = SweetAlertIcon.Question,
+                ShowCancelButton = true
+        });
+
+        if (resultado.IsConfirmed)
+        {
+            var eliminado = await productoService.Eliminar(Id);
+
+            if (eliminado)
+                listaProducto = listaProducto!.FindAll(e => e.IdProducto != Id);
+        }
+    }
+}
